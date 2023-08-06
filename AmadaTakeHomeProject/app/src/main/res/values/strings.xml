@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Amada Take Home Project</string>
+    <string name="flickr_err">Unable to retrieve photos</string>
+    <string name="search">Search</string>
+    <string name="enter_search_text">Enter search text</string>
+    <string name="flickr_image_description">Thumbnail from Flickr</string>
+</resources>
