@@ -1,14 +1,5 @@
 Amada Android Take home test
 
-Would use Hilt for dependency injection
-
-
-Would use Timber for logging.
-
-For the Flickr API key, I would pass this in to the retrofit call from high above, either
-for the specific build type or extract it from a vault in the build process. 
-
-
 NOTE
 
 • Used this plug in to generate the POKOs from the returned JSON
