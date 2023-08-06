@@ -112,7 +112,6 @@ class PhotoViewModel : ViewModel() {
             if (page == 1) {
                 resetPagination()
             }
-            resetPagination()
             mutablePhotosFlow.value = ResponseState.Loading()
             when (val response = photoRepository.searchPhotos(searchText, page)) {
                 is ApiResponse.Failed -> {
