@@ -17,7 +17,7 @@ class PhotoRepository {
                 page = page,
                 format = "json",
                 noJsonCallback = "1",
-                perPage = 10
+                perPage = 30
             )
             Success(flickrPhotos)
         } catch (e: Exception) {

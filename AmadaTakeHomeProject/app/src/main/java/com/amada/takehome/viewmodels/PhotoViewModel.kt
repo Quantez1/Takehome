@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.amada.takehome.R
-import com.amada.takehome.models.Photo
+import com.amada.takehome.models.PhotosModel
 import com.amada.takehome.repositories.PhotoRepository
 import com.amada.takehome.utils.ApiResponse
 import com.amada.takehome.utils.ResponseState
@@ -31,7 +31,7 @@ class PhotoViewModel : ViewModel() {
     private var currentPage = 1
     private var totalPages = 0
     private var lastFlickrFunction = FlickrFunction.FLICKR_FUNCTION_NONE
-    private var photoList: MutableList<Photo> = mutableListOf()
+    private var photoList: PhotosModel = PhotosModel(listOf(), false)
     private var lastSearchText = ""
 
     private fun canPaginate(): Boolean {
@@ -44,20 +44,16 @@ class PhotoViewModel : ViewModel() {
         totalPages = 0
         lastFlickrFunction = FlickrFunction.FLICKR_FUNCTION_NONE
         lastSearchText = ""
-        photoList = mutableListOf()
+        photoList = PhotosModel(mutableListOf(), clearPhotos = true)
     }
 
     private fun updatePagination(
-        photos: List<Photo>,
+        photos: PhotosModel,
         total: Int,
         flickrFunction: FlickrFunction,
         searchText: String? = null
     ) {
-        if (currentPage == 1) {
-            photoList = photos.toMutableList()
-        } else {
-            photoList += photos
-        }
+        photoList = photos
         totalPages = total
         currentPage += 1
         lastFlickrFunction = flickrFunction
@@ -67,8 +63,8 @@ class PhotoViewModel : ViewModel() {
     private val photoRepository = PhotoRepository()
 
     private val mutablePhotosFlow =
-        MutableStateFlow<ResponseState<List<Photo>>>(InitialState())
-    val photosFlow: StateFlow<ResponseState<List<Photo>>>
+        MutableStateFlow<ResponseState<PhotosModel>>(InitialState())
+    val photosFlow: StateFlow<ResponseState<PhotosModel>>
         get() = mutablePhotosFlow.asStateFlow()
 
     fun fetchRecentPhotos(page: Int = 1) {
@@ -83,11 +79,10 @@ class PhotoViewModel : ViewModel() {
                     mutablePhotosFlow.value = ResponseState.Failed(R.string.flickr_err)
                     Log.e("Flickr", "Unable to retrieve Flickr images")
                 }
-
                 is ApiResponse.Success -> {
                     if (response.payload.stat == "ok") {
                         with(response.payload.photos) {
-                            updatePagination(photo, pages, FlickrFunction.FLICKR_FUNCTION_RECENT)
+                            updatePagination(PhotosModel(photo, clearPhotos = page == 1), pages, FlickrFunction.FLICKR_FUNCTION_RECENT)
                         }
                         mutablePhotosFlow.value = ResponseState.Success(photoList)
                     } else {
@@ -121,7 +116,7 @@ class PhotoViewModel : ViewModel() {
                     if (response.payload.stat == "ok") {
                         with(response.payload.photos) {
                             updatePagination(
-                                photos = photo,
+                                photos = PhotosModel(photo, clearPhotos = page == 1),
                                 total = pages,
                                 flickrFunction = FlickrFunction.FLICKR_FUNCTION_RECENT,
                                 searchText = searchText

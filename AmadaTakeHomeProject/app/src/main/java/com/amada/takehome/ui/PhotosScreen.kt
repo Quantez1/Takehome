@@ -1,6 +1,5 @@
 package com.amada.takehome.ui
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,7 +34,9 @@ import com.amada.takehome.models.Photo
 import com.amada.takehome.ui.common.ProgressIndicator
 import com.amada.takehome.ui.common.ShowSnackbar
 import com.amada.takehome.utils.FlickrSize
+import com.amada.takehome.utils.LastEvent
 import com.amada.takehome.utils.createFlickrImageUrl
+import com.amada.takehome.utils.isScrolledToTheEnd
 import com.amada.takehome.utils.map
 import com.amada.takehome.utils.mapFailure
 import com.amada.takehome.utils.mapLoading
@@ -59,26 +61,37 @@ fun PopulatePhotoScreen() {
     val searchText = remember { mutableStateOf("") }
     var errorMessage: String? = null
     var photos: List<Photo>? = null
+    var clearPhotos = false
 
     val photoViewModel = viewModel<PhotoViewModel>()
-        remember { PhotoViewModel() }
+
+    val lastEvent = remember { mutableStateOf(LastEvent.NONE) }
+    var currentEvent = LastEvent.NONE
     val photoEvent by photoViewModel.photosFlow.collectAsStateWithLifecycle()
     photoEvent
         .mapLoading {
             isLoading.value = true
             errorMessage = null
-            photos = null
+            currentEvent = LastEvent.MAP_LOADING
         }
-        .map {
+        .map { photosModel ->
             isLoading.value = false
             errorMessage = null
-            photos = it
+            photos = photosModel.photos
+            clearPhotos = photosModel.clearPhotos
+            currentEvent = LastEvent.MAP
         }
         .mapFailure {
             isLoading.value = false
             errorMessage = stringResource(id = it)
-            photos = null
+            currentEvent = LastEvent.MAP_FAILURE
         }
+
+    if (currentEvent == lastEvent.value) {
+        photos = listOf()
+    } else {
+        lastEvent.value = currentEvent
+    }
 
     PhotosScreen(
         searchTextLabel = stringResource(R.string.search),
@@ -86,7 +99,8 @@ fun PopulatePhotoScreen() {
         flickrDescriptionLabel = stringResource(R.string.flickr_image_description),
         isLoading = isLoading.value,
         errorMessage = errorMessage,
-        photos = photos,
+        photoList = photos,
+        clearPhotos = clearPhotos,
         buttonPressed = {
             if (searchText.value.isEmpty()) {
                 photoViewModel.fetchRecentPhotos()
@@ -95,9 +109,8 @@ fun PopulatePhotoScreen() {
             }
         },
         searchText = searchText.value,
-        updateSearchText = { searchText.value = it },
-        paginate = { photoViewModel.fetchNextPage() }
-    )
+        updateSearchText = { searchText.value = it }
+    ) { photoViewModel.fetchNextPage() }
 }
 
 /**
@@ -110,14 +123,24 @@ fun PhotosScreen(
     flickrDescriptionLabel: String,
     isLoading: Boolean,
     errorMessage: String?,
-    photos: List<Photo>?,
+    photoList: List<Photo>?,
+    clearPhotos: Boolean,
     searchText: String,
     updateSearchText: (searchText: String) -> Unit,
     buttonPressed: () -> Unit,
     paginate: () -> Unit
 ) {
+    val photos = remember { mutableStateListOf<Photo>() }
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
+    val reachedBottom = remember { mutableStateOf(false) }
+
+    photoList?.let {
+        if (clearPhotos && photoList.isNotEmpty()) {
+            photos.clear()
+        }
+        photos.addAll(it)
+    }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -159,17 +182,19 @@ fun PhotosScreen(
                     text = searchTextLabel
                 )
             }
-            photos?.let { photos ->
+            photos.let { photos ->
                 val lazyGridListState = rememberLazyGridState()
 
                 val shouldStartPaginate: State<Boolean> = remember {
                     derivedStateOf {
-                        (lazyGridListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -9) >= (lazyGridListState.layoutInfo.totalItemsCount - 6)
+                        lazyGridListState.isScrolledToTheEnd()
+                                && lazyGridListState.layoutInfo.visibleItemsInfo.isNotEmpty()
                     }
                 }
-                if (shouldStartPaginate.value) {
+                if (!reachedBottom.value && shouldStartPaginate.value) {
                     paginate()
                 }
+                reachedBottom.value = shouldStartPaginate.value
 
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
@@ -196,4 +221,3 @@ fun PhotosScreen(
         }
     }
 }
-

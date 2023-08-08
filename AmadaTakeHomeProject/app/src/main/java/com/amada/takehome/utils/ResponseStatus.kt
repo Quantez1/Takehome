@@ -71,3 +71,7 @@ inline fun <T> ResponseState<T>.mapLoading(f: (Unit) -> Unit): ResponseState<T> 
     is Failed<*> -> this
     is InitialState -> this
 }
+
+enum class LastEvent {
+    NONE, MAP, MAP_LOADING, MAP_FAILURE
+}

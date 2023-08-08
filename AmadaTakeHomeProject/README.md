@@ -25,8 +25,5 @@ IMPROVEMENTS
 
 BUGS
 
-• Currently when the photo grid reaches the bottom, it clears the grid and then positions at the top.
-  The correct behavior would be to retain the current position and then simply add the new photos to
-  grid.
 • size of thumbnail image is hard coded.
 • pressing OK on keyboard doesn't kick off a search.
