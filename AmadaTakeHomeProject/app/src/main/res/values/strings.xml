@@ -4,4 +4,7 @@
     <string name="search">Search</string>
     <string name="enter_search_text">Enter search text</string>
     <string name="flickr_image_description">Thumbnail from Flickr</string>
+    <string name="is_family">Is Family</string>
+    <string name="is_friend">Is Friend</string>
+    <string name="is_public">Is Public</string>>
 </resources>

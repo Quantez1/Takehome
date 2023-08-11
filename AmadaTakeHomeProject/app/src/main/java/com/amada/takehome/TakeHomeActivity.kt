@@ -7,10 +7,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.amada.takehome.ui.PopulatePhotoScreen
+import com.amada.takehome.navgraphs.PhotoNavGraph
 import com.amada.takehome.ui.theme.AmadaTakeHomeProjectTheme
 
 class TakeHomeActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -19,7 +20,7 @@ class TakeHomeActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    PopulatePhotoScreen()
+                    PhotoNavGraph()
                 }
             }
         }

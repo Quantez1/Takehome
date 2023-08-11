@@ -2,6 +2,7 @@ package com.amada.takehome.utils
 
 enum class FlickrSize(val suffix: String) {
     THUMBNAIL_150("q"),
+    LARGE_2048("b")
 }
 
 /**

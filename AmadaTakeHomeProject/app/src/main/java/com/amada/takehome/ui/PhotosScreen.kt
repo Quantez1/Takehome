@@ -1,5 +1,6 @@
 package com.amada.takehome.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +22,9 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -56,7 +59,9 @@ fun PhotoScreenPreview() {
  * PhotoScreen, and handles its hoisted data.
  */
 @Composable
-fun PopulatePhotoScreen() {
+fun PopulatePhotoScreen(
+    onPhotoClicked: (photo: Photo) -> Unit
+) {
     val isLoading = remember { mutableStateOf(false) }
     val searchText = remember { mutableStateOf("") }
     var errorMessage: String? = null
@@ -109,13 +114,16 @@ fun PopulatePhotoScreen() {
             }
         },
         searchText = searchText.value,
-        updateSearchText = { searchText.value = it }
-    ) { photoViewModel.fetchNextPage() }
+        updateSearchText = { searchText.value = it },
+        paginate = { photoViewModel.fetchNextPage() },
+        photoSelected = onPhotoClicked
+    )
 }
 
 /**
  * This is the stateless composable for the PhotoScreen.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PhotosScreen(
     searchTextLabel: String,
@@ -128,12 +136,14 @@ fun PhotosScreen(
     searchText: String,
     updateSearchText: (searchText: String) -> Unit,
     buttonPressed: () -> Unit,
-    paginate: () -> Unit
-) {
+    paginate: () -> Unit,
+    photoSelected: (photo: Photo) -> Unit
+    ) {
     val photos = remember { mutableStateListOf<Photo>() }
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
     val reachedBottom = remember { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     photoList?.let {
         if (clearPhotos && photoList.isNotEmpty()) {
@@ -174,7 +184,10 @@ fun PhotosScreen(
             )
             Button(
                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 20.dp),
-                onClick = { buttonPressed() }
+                onClick = {
+                    keyboardController?.hide()
+                    buttonPressed()
+                }
             ) {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
@@ -204,6 +217,7 @@ fun PhotosScreen(
                         item {
                             AsyncImage(
                                 modifier = Modifier
+                                    .clickable { photoSelected(photo) }
                                     .fillMaxWidth()
                                     .height(140.dp),
                                 model = createFlickrImageUrl(
