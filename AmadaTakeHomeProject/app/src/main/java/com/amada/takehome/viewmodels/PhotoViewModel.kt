@@ -118,7 +118,7 @@ class PhotoViewModel : ViewModel() {
                             updatePagination(
                                 photos = PhotosModel(photo, clearPhotos = page == 1),
                                 total = pages,
-                                flickrFunction = FlickrFunction.FLICKR_FUNCTION_RECENT,
+                                flickrFunction = FlickrFunction.FLICKR_FUNCTION_SEARCH,
                                 searchText = searchText
                             )
                         }
